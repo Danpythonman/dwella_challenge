@@ -1,19 +1,20 @@
 const router = require("express").Router();
+const passport = require("passport");
 
 // Controller middlewear
 const userManagementController = require("../controllers/user-management-api");
 
-/** User Signup */
+/** User signup */
 router.post("/signup", userManagementController.userSignUp);
 
 /** User login */
-router.post("/login", userManagementController.userLogin);
+router.post("/login", passport.authenticate("local"), (req, res) => {res.status(200).send("Logged in");});
 
 /** User change password */
-router.post("/change-password", userManagementController.changePassword);
+router.put("/change-password", userManagementController.changePassword);
 
 /** User update profile */
-router.post("/update-profile", userManagementController.updateProfile);
+router.put("/update-profile", userManagementController.updateProfile);
 
 /** Delete user */
 router.delete("/delete-user", userManagementController.deleteUser);
