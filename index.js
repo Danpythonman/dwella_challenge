@@ -9,34 +9,18 @@
 *******************************************************************************/
 
 const express = require("express");
+const routes = require("./routes/user-management-api");
 
 const app = express();
 
 // Put the body of POST requests in the request variable instead of the URL
 app.use(express.urlencoded({extended: false}));
 
-/* * * * * * * * * * * * * * * User Management * * * * * * * * * * * * * * */
+app.use(routes);
 
-/** User Signup */
-app.post("/signup", (req, res) => {});
-
-/** User login */
-app.post("/login", (req, res) => {});
-
-/** User change password */
-app.post("/change-password", (req, res) => {});
-
-/** User update profile */
-app.post("/update-profile", (req, res) => {});
-
-/** Delete user */
-app.delete("/delete-user", (req, res) => {});
-
-/** Get list of all users */
-app.get("/get-all-users", (req, res) => {});
-
-/** Get user */
-app.get("/get-user", (req, res) => {});
+app.get("/", (req, res) => {
+    res.sendFile("index.html", {root: __dirname});
+});
 
 const PORT = 5000;
 
