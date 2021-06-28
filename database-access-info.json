@@ -3,5 +3,6 @@
     "password": "cUtL9pjWWtgNmcwB",
     "URI": "mongodb+srv://dwella-challenge-user1:cUtL9pjWWtgNmcwB@cluster0.883dj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
     "dataBaseName": "DwellaChallenge",
-    "collectionName": "userObjects"
+    "usersCollectionName": "userObjects",
+    "listingsCollectionName": "listingObjects"
 }

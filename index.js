@@ -9,7 +9,8 @@
 *******************************************************************************/
 
 const express = require("express");
-const routes = require("./routes/user-management-api");
+const user_management_routes = require("./routes/user-management-api");
+const real_estate_listing_routes = require("./routes/real-estate-listing-api");
 const passport = require("passport");
 // const LocalStrategy = require("passport-local").Strategy;
 // const authenticateUser = require("./authenticateUser");
@@ -26,7 +27,8 @@ app.use(session({ secret: "secret", resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
-app.use(routes);
+app.use(user_management_routes);
+app.use(real_estate_listing_routes);
 
 app.get("/", (req, res) => {
     res.sendFile("index.html", {root: __dirname});

@@ -7,7 +7,7 @@ const bcrypt = require("bcrypt");
 const URI = JSON.parse(fs.readFileSync("./database-access-info.json"))["URI"];
 // Get database name and collection name from separate file
 const dataBaseName = JSON.parse(fs.readFileSync("./database-access-info.json"))["dataBaseName"];
-const collectionName = JSON.parse(fs.readFileSync("./database-access-info.json"))["collectionName"];
+const collectionName = JSON.parse(fs.readFileSync("./database-access-info.json"))["usersCollectionName"];
 
 /************************ * * * * * Signup * * * * * *************************/
 
