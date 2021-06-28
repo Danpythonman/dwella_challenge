@@ -63,6 +63,7 @@ Change Password
     newPassword: string
 }
 ```
+All fields are required.
 Only works is user is logged in (handled by passport library).
 
 
@@ -79,6 +80,7 @@ Update Profile
     updatedProperty: string (new value of that property)
 }
 ```
+All fields are required.
 Only works is user is logged in (handled by passport library).
 
 
@@ -105,6 +107,89 @@ Get User by Username
 * Path: /get-user/:username
 
 username is a URL parameter and should be the username of the specified user.
+Missing functionality: you cannot use an email to get the user.
+
+
+Real Estate Listings
+====================
+
+The routing for real estate listings is found in routes\real-estate-listing-api.js and the controller is found in controllers\real-estate-listing-api.js.
+
+Create Listing
+-------------
+
+* Request type: POST
+* Path: /listing
+
+### Body Format:
+
+```
+{
+    title: string,
+    address: string,
+    price: number,
+    city: string,
+    owner: string,
+    type: either 'residential', 'commercial', or 'industrial'
+}
+```
+All fields are required.
+
+
+Update Listing
+--------------
+
+Not available
+
+
+Delete Listing from Market
+--------------------------
+
+Not available
+
+
+Delete Listing from Database
+----------------------------
+
+* Request type: DELETE
+* Path: /listing
+
+### Body Format:
+
+```
+{
+    id: ObjectId of the listing
+}
+```
+All fields are required.
+
+
+Get All Listings
+----------------
+
+* Request type: GET
+* Path: /listings
+
+
+Get Listings by City
+--------------------
+
+* Request type: GET
+* Path: /listings/:city
+
+city is a URL parameter.
+It is case insensitive.
+
+
+Get Listings by City and Price Range
+------------------------------------
+
+* Request type: GET
+* Path: /listings/:city/:min/:max
+
+city is a URL parameter.
+It is case insensitive.
+min and max are numbers.
 
 
 Contact
