@@ -62,6 +62,9 @@ createListing = async (req, res) => {
                 return; // Stop here
             }
 
+            // Make the city upper case so that it is easier to search for cities
+            req.body.city = req.body.city.toUpperCase();
+
             // Connect to database
             const mongoClient = new MongoClient(URI,
                 { useNewUrlParser: true, useUnifiedTopology: true });
@@ -93,12 +96,16 @@ createListing = async (req, res) => {
 /******************** * * * * * Update listing * * * * * *********************/
 
 // To be completed
-updateListing = (req, res) => {}
+updateListing = (req, res) => {
+    res.status(503).send("Endpoint not available");
+}
 
 /************* * * * * * Delete listing from market * * * * * **************/
 
 // To be completed
-deleteListingFromMarket = (req, res) => {}
+deleteListingFromMarket = (req, res) => {
+    res.status(503).send("Endpoint not available")
+}
 
 /************* * * * * * Delete listing from database * * * * * **************/
 
@@ -133,15 +140,53 @@ deleteListingFromDB = (req, res) => {
     });
 }
 
-/************* * * * * * Get all listings * * * * * **************/
+/******************* * * * * * Get all listings * * * * * ********************/
 
-getAllListings = (req, res) => {}
+getAllListings = (req, res) => {
+    // Connect to database
+    const mongoClient = new MongoClient(URI,
+        { useNewUrlParser: true, useUnifiedTopology: true });
+    mongoClient.connect(async (err, db) => {
 
-/************* * * * * * Get listings by city * * * * * **************/
+        // Get collection
+        const collection = mongoClient.db(dataBaseName).collection(collectionName);
 
-getListingsByCity = (req, res) => {}
+        collection.find({}).toArray((err, result) => {
+            if (err) {
+                res.status(500).send("Error with accessing listings from database");
+                throw err;
+            }
+            res.status(200).send(result);
+            console.log("All listings retrieved");
+            mongoClient.close();
+        });
+    });
+}
 
-/************* * * * * * Get listings by city * * * * * **************/
+/***************** * * * * * Get listings by city * * * * * ******************/
+
+getListingsByCity = (req, res) => {
+    // Connect to database
+    const mongoClient = new MongoClient(URI,
+        { useNewUrlParser: true, useUnifiedTopology: true });
+    mongoClient.connect(async (err, db) => {
+
+        // Get collection
+        const collection = mongoClient.db(dataBaseName).collection(collectionName);
+
+        collection.find({city: req.params.city.toUpperCase()}).toArray((err, result) => {
+            if (err) {
+                res.status(500).send("Error with accessing listings from database");
+                throw err;
+            }
+            res.status(200).send(result);
+            console.log(`All listings in ${req.params.city} retrieved`);
+            mongoClient.close();
+        });
+    });
+}
+
+/********* * * * * * Get listings by city and price range * * * * * **********/
 
 getListingsByCityAndPrice = (req, res) => {}
 
