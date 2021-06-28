@@ -1,3 +1,13 @@
+/*******************************************************************************
+ *
+ * authenticateUser.js
+ *
+ * Created by: Daniel Di Giovanni
+ *
+ * Created on: June 27, 2021
+ *
+*******************************************************************************/
+
 const fs = require("fs");
 const { MongoClient, ObjectId } = require("mongodb");
 const bcrypt = require("bcrypt");

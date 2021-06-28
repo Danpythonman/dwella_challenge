@@ -1,3 +1,13 @@
+/*******************************************************************************
+ *
+ * routes\user-management-api.js
+ *
+ * Created by: Daniel Di Giovanni
+ *
+ * Created on: June 26, 2021
+ *
+*******************************************************************************/
+
 const router = require("express").Router();
 const passport = require("passport");
 

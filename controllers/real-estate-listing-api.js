@@ -1,3 +1,13 @@
+/*******************************************************************************
+ *
+ * controllers\real-estate-listing-api.js
+ *
+ * Created by: Daniel Di Giovanni
+ *
+ * Created on: June 27, 2021
+ *
+*******************************************************************************/
+
 const fs = require("fs");
 const Joi = require("joi");
 const { MongoClient, ObjectId } = require("mongodb");
@@ -100,14 +110,14 @@ createListing = async (req, res) => {
 
 // To be completed
 updateListing = (req, res) => {
-    res.status(503).send("Endpoint not available");
+    res.status(503).send("Update listing endpoint not available");
 }
 
 /************* * * * * * Delete listing from market * * * * * **************/
 
 // To be completed
 deleteListingFromMarket = (req, res) => {
-    res.status(503).send("Endpoint not available")
+    res.status(503).send("Delete listing from market endpoint not available")
 }
 
 /************* * * * * * Delete listing from database * * * * * **************/
