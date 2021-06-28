@@ -2,8 +2,6 @@ const fs = require("fs");
 const Joi = require("joi");
 const { MongoClient, ObjectId } = require("mongodb");
 const bcrypt = require("bcrypt");
-const passport = require("passport");
-// const passport = require("passport");
 
 // Get database URI from separate file
 const URI = JSON.parse(fs.readFileSync("./database-access-info.json"))["URI"];
@@ -11,7 +9,11 @@ const URI = JSON.parse(fs.readFileSync("./database-access-info.json"))["URI"];
 const dataBaseName = JSON.parse(fs.readFileSync("./database-access-info.json"))["dataBaseName"];
 const collectionName = JSON.parse(fs.readFileSync("./database-access-info.json"))["collectionName"];
 
+/************************ * * * * * Signup * * * * * *************************/
+
 userSignUp = (req, res) => {
+    // Create schema for input validation, then validate
+    // This schema is what is expected from the client
     const schema = Joi.object({
         username: Joi.string().required(),
         password: Joi.string().required(),
@@ -22,11 +24,9 @@ userSignUp = (req, res) => {
     });
     const validationResult = schema.validate(req.body);
 
+    // If error, send error details
     if (validationResult.error) {
-        let errorDetails = "";
-        for (let i = 0; i < validationResult.error.details.length; i++) {
-            errorDetails += validationResult.error.details[i].message;
-        }
+            const errorDetails = validationResult.error.details[0].message;
         res.status(400).send(errorDetails);
         return; // Stop here
     }
@@ -34,78 +34,103 @@ userSignUp = (req, res) => {
     // Connect to database
     const mongoClient = new MongoClient(URI,
         { useNewUrlParser: true, useUnifiedTopology: true });
-
     mongoClient.connect(async (err, db) => {
-        try {
-            currentUserObject = req.body;
-            currentUserObject["password"] = await bcrypt.hash(req.body.password, 10);
-
+        // Encrypt password
+        currentUserObject = req.body;
+        currentUserObject["password"] = await bcrypt.hash(req.body.password, 10)
+        .then(() => {
+            // Insert object in the collection in the database
             const collection = mongoClient.db(dataBaseName)
-                .collection(collectionName);
+            .collection(collectionName);
 
             collection.insertOne(req.body, async (err, res) => {
                 if (err) {throw err;}
                 console.log("New user added");
                 mongoClient.close();
             });
-
+            // Send the object back
             res.status(200).send(currentUserObject);
-        } catch {
+        }).catch(() => {
             res.status(500).send("Error with password hashing");
             console.log("Error with password hashing");
-        }
+        });
     });
 }
 
+/************************* * * * * * Login * * * * * **************************/
+
+// Login function not needed. It is handled by passport
 userLogin = (req, res) => {}
 
+/******************** * * * * * Change Password * * * * * *********************/
+
 changePassword = async (req, res) => {
+    /* Expects in request body:
+     * oldPassword -> should match the current user's password
+     * newPassword -> new password that will be saved
+     */
+
+    // Stop the function if there is no user logged in
     if (!req.user) {
         res.status(401).send("Must be logged in");
         return;
     }
-    try {
-        if (await bcrypt.compare(req.body.oldPassword, req.user.password)) {
-            // Connect to database
-            const mongoClient = new MongoClient(URI,
-                { useNewUrlParser: true, useUnifiedTopology: true });
-
-            mongoClient.connect(async (err, db) => {
-                const collection = mongoClient.db(dataBaseName).collection(collectionName);
-                console.log(req.user._id);
-                const userQuery = {_id: new ObjectId(req.user._id)}
-
-                try {
-                    const userNewPassword = await bcrypt.hash(req.body.newPassword, 10);
-                    const userPasswordUpdate = { $set: {password: userNewPassword}};
-                    collection.updateOne(userQuery, userPasswordUpdate, (err, result) => {
-                        if (err) {throw err;}
-                        console.log("User password updated");
-                        res.status(200).send("Password updated");
-                        mongoClient.close();
-                    });
-                } catch (e) {
-                    console.log(e);
-                    res.status(500).send("Error with hashing password");
-                }
-
-            });
-        }
-        else {
+    // Compare the old password with the current password in the user object
+    await bcrypt.compare(req.body.oldPassword, req.user.password)
+    .then((passwordsMatch) => {
+        if (!passwordsMatch) {
             res.status(400).send("Current password incorrect");
+            return;
         }
-    } catch (e) {
+
+        // Connect to database
+        const mongoClient = new MongoClient(URI,
+            { useNewUrlParser: true, useUnifiedTopology: true });
+        mongoClient.connect(async (err, db) => {
+            const collection = mongoClient.db(dataBaseName).collection(collectionName);
+            const userQuery = { _id: new ObjectId(req.user._id) }
+
+            // Encrypt new password
+            await bcrypt.hash(req.body.newPassword, 10)
+            .then((userNewPassword) => {
+                // Update object
+                const userPasswordUpdate = { $set: {password: userNewPassword}};
+
+                // Update password in database
+                collection.updateOne(userQuery, userPasswordUpdate, (err, result) => {
+                    if (err) {throw err;}
+                    console.log("User password updated");
+                    res.status(200).send("Password updated");
+                    mongoClient.close();
+                })
+            })
+            .catch((e) => {
+                console.log(e);
+                res.status(500).send("Error with hashing password");
+            });
+        });
+    })
+    .catch((e) => {
         console.log(e);
-        res.status(500).send("Error with hashing password");
-    }
+        res.status(500).send("Error with comparing passwords");
+    });
 }
 
+/******************** * * * * * Update Profile * * * * * *********************/
+
 updateProfile = (req, res) => {
+    /* Expects in request body:
+     * selectedProperty -> either 'full_name', 'phone_number', or 'address'
+     * updatedProperty -> new value to put in the field specified in selectedProperty
+     */
+
+    // Stop the function if there is no user logged in
     if (!req.user) {
         res.status(401).send("Must be logged in");
         return;
     }
 
+    // Form the update object according to the specified property to be updated
     if (req.body.selectedProperty == "full_name") {
         var userUpdate = { $set: {full_name: req.body.updatedProperty}};
     }
@@ -123,11 +148,11 @@ updateProfile = (req, res) => {
     // Connect to database
     const mongoClient = new MongoClient(URI,
         { useNewUrlParser: true, useUnifiedTopology: true });
-
     mongoClient.connect(async (err, db) => {
         const collection = mongoClient.db(dataBaseName).collection(collectionName);
         const userQuery = {_id: new ObjectId(req.user._id)};
 
+        // Update the user object in the database
         collection.updateOne(userQuery, userUpdate, (err, result) => {
             if (err) {throw err;}
             console.log("User updated");
@@ -137,7 +162,10 @@ updateProfile = (req, res) => {
     });
 }
 
+/********************** * * * * * Delete user * * * * * ***********************/
+
 deleteUser = (req, res) => {
+    // Stop the function if there is no user logged in
     if (!req.user) {
         res.status(401).send("Must be logged in");
         return;
@@ -146,11 +174,11 @@ deleteUser = (req, res) => {
     // Connect to database
     const mongoClient = new MongoClient(URI,
         { useNewUrlParser: true, useUnifiedTopology: true });
-
     mongoClient.connect(async (err, db) => {
         const collection = mongoClient.db(dataBaseName).collection(collectionName);
         const userQuery = {username: req.user.username};
 
+        // Delete the user in the database
         collection.deleteOne(userQuery, (err, result) => {
             if (err) {throw err;}
             console.log("User deleted");
@@ -160,15 +188,17 @@ deleteUser = (req, res) => {
     });
 }
 
+/***************** * * * * * Get list of all users * * * * * ******************/
+
 getAllUsers = (req, res) => {
     // Connect to database
     const mongoClient = new MongoClient(URI,
         { useNewUrlParser: true, useUnifiedTopology: true });
-
     mongoClient.connect((err, db) => {
         const collection = mongoClient.db(dataBaseName)
             .collection(collectionName);
 
+        // Get array of all users in the collection
         collection.find({}).toArray((err, result) => {
             if (err) {throw err;}
             for (let i = 0; i < result.length; i++) {
@@ -181,17 +211,21 @@ getAllUsers = (req, res) => {
     });
 }
 
+/***************** * * * * * Get user by username * * * * * ******************/
+
+// Missing functionality to get user by email
 getUser = (req, res) => {
     // Connect to database
     const mongoClient = new MongoClient(URI,
         { useNewUrlParser: true, useUnifiedTopology: true });
-
     mongoClient.connect(async (err, db) => {
         const collection = mongoClient.db(dataBaseName)
             .collection(collectionName);
 
-        try {
-            const queriedUser = await collection.findOne({ username: req.params.username });
+        // Get user from the database
+        await collection.findOne({ username: req.params.username })
+            .then((queriedUser) => {
+            // Check if user actually exists in database
             if (!queriedUser) {
                 res.status(400).send(`No user object with username ${req.params.username}`);
             }
@@ -200,9 +234,10 @@ getUser = (req, res) => {
                 console.log(`User object with username ${req.params.username} retrieved`);
             }
             mongoClient.close();
-        } catch {
+        })
+        .catch(() => {
             res.status(500).send("Error with retrieving specified user");
-        }
+        });
     });
 }
 
