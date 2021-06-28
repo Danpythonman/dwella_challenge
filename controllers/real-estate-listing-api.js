@@ -62,6 +62,9 @@ createListing = async (req, res) => {
                 return; // Stop here
             }
 
+            // Convert string into float
+            req.body.price = parseFloat(req.body.price);
+
             // Make the city upper case so that it is easier to search for cities
             req.body.city = req.body.city.toUpperCase();
 
@@ -174,7 +177,8 @@ getListingsByCity = (req, res) => {
         // Get collection
         const collection = mongoClient.db(dataBaseName).collection(collectionName);
 
-        collection.find({city: req.params.city.toUpperCase()}).toArray((err, result) => {
+        collection.find(
+            {city: req.params.city.toUpperCase()}).toArray((err, result) => {
             if (err) {
                 res.status(500).send("Error with accessing listings from database");
                 throw err;
@@ -188,6 +192,41 @@ getListingsByCity = (req, res) => {
 
 /********* * * * * * Get listings by city and price range * * * * * **********/
 
-getListingsByCityAndPrice = (req, res) => {}
+getListingsByCityAndPrice = (req, res) => {
+    // Make sure minimum and maximum parameters are numbers
+    try {
+        var minimumPrice = parseFloat(req.params.min);
+        var maximumPrice = parseFloat(req.params.max);
+    } catch {
+        res.status(400).send("Minimum and maximum values must be numbers");
+        return;
+    }
+
+    // Connect to database
+    const mongoClient = new MongoClient(URI,
+        { useNewUrlParser: true, useUnifiedTopology: true });
+    mongoClient.connect(async (err, db) => {
+
+        // Get collection
+        const collection = mongoClient.db(dataBaseName).collection(collectionName);
+
+        collection.find(
+            {
+                city: req.params.city.toUpperCase(),
+                price: {
+                    $gte: minimumPrice,
+                    $lte: maximumPrice
+                }
+            }).toArray((err, result) => {
+            if (err) {
+                res.status(500).send("Error with accessing listings from database");
+                throw err;
+            }
+            res.status(200).send(result);
+            console.log(`All listings in ${req.params.city} between $${req.params.min} and $${req.params.max} retrieved`);
+            mongoClient.close();
+        });
+    });
+}
 
 module.exports = { createListing, updateListing, deleteListingFromMarket, deleteListingFromDB, getAllListings, getListingsByCity, getListingsByCityAndPrice };
