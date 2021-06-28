@@ -90,4 +90,59 @@ createListing = async (req, res) => {
     });
 }
 
-module.exports = { createListing };
+/******************** * * * * * Update listing * * * * * *********************/
+
+// To be completed
+updateListing = (req, res) => {}
+
+/************* * * * * * Delete listing from market * * * * * **************/
+
+// To be completed
+deleteListingFromMarket = (req, res) => {}
+
+/************* * * * * * Delete listing from database * * * * * **************/
+
+deleteListingFromDB = (req, res) => {
+    // Check if the client provided an ID
+    if (!req.body.id) {
+        res.status(400).send("Provide an ID");
+        return;
+    }
+
+    // Connect to database
+    const mongoClient = new MongoClient(URI,
+        { useNewUrlParser: true, useUnifiedTopology: true });
+    mongoClient.connect(async (err, db) => {
+
+        // Get collection
+        const collection = mongoClient.db(dataBaseName).collection(collectionName);
+
+        // Get listing from collection
+        const listingQuery = {_id: new ObjectId(req.body.id)};
+
+        // Delete the user in the database
+        collection.deleteOne(listingQuery, (err, result) => {
+            if (err) {
+                res.status(500).send("Error with deleting listing");
+                throw err;
+            }
+            console.log("Listing deleted");
+            res.status(200).send("Listing deleted");
+            mongoClient.close();
+        });
+    });
+}
+
+/************* * * * * * Get all listings * * * * * **************/
+
+getAllListings = (req, res) => {}
+
+/************* * * * * * Get listings by city * * * * * **************/
+
+getListingsByCity = (req, res) => {}
+
+/************* * * * * * Get listings by city * * * * * **************/
+
+getListingsByCityAndPrice = (req, res) => {}
+
+module.exports = { createListing, updateListing, deleteListingFromMarket, deleteListingFromDB, getAllListings, getListingsByCity, getListingsByCityAndPrice };
